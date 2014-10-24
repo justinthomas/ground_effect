@@ -8,7 +8,7 @@
   </include>
 
   <!-- This is for the MIDI controller -->
-  <node pkg="korg_nanokontrol"
+  <node pkg="korg_nanokontrol2"
     type="kontrol.py"
     name="korg_nanokontrol"
     output="screen" 
