@@ -7,7 +7,7 @@
     <arg name="mass" default="0.73"/> 
     
     <param name="mass" value="$(arg mass)" />
-    <rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml"/>
+    <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
     
     <node pkg="nodelet"
       type="nodelet"
@@ -50,8 +50,8 @@
       name="controllers_manager"
       args="load controllers_manager/ControllersManager standalone_nodelet"
       output="screen">
-      <rosparam file="$(find state_control_cylinder)/config/controllers.yaml"/>
-      <rosparam file="$(find state_control_cylinder)/config/controller_params.yaml"/>
+      <rosparam file="$(find ground_effect)/config/controllers.yaml"/>
+      <rosparam file="$(find ground_effect)/config/controller_params.yaml"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="position_cmd"/>
     </node>
@@ -68,7 +68,6 @@
       <remap from="~corrections" to="corrections"/>
       <remap from="~so3_cmd" to="so3_cmd"/>
       <param name="mass" value="$(arg mass)" />
-      <rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml"/>
     </node>
     
     <!-- This is the state control node -->
@@ -79,6 +78,7 @@
       output="screen">
       <!-- rosparam file="$(find state_control_cylinder)/config/$(arg model)_params.yaml" / -->
       <!-- rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml" / -->
+      <param name="traj_filename" type="string" value="/home/xua/git/ground_effect/traj.csv"/>
       <param name="safety_catch" value="true"/>
       <!-- remap from="so3_cmd" to="so3_cmd_vision"/ -->
     </node>

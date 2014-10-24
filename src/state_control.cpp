@@ -60,6 +60,7 @@ quadrotor_msgs::PositionCommand traj_goal;
 static const std::string trajectory_tracker_str("trajectory_tracker/TrajectoryTracker");
 void updateTrajGoal();
 static std::string traj_filename;
+double kx_[3], kv_[3];
 
 // States
 static enum controller_state state_ = INIT;
@@ -84,7 +85,7 @@ static bool imu_info_ = false;
 
 // Strings
 static const std::string line_tracker_distance("line_tracker/LineTrackerDistance");
-static const std::string line_tracker("line_tracker/LineTracker");
+static const std::string line_tracker("line_tracker/LineTrackerMinJerk");
 static const std::string line_tracker_yaw("line_tracker/LineTrackerYaw");
 static const std::string velocity_tracker_str("velocity_tracker/VelocityTrackerYaw");
 
@@ -231,14 +232,20 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       {
         state_ = PREP_TRAJ;
         ROS_INFO("Loading Trajectory.  state_ == PREP_TRAJ;");
-        
+       
+        // Updates traj goal to allow for correct initalization of the trajectory 
+        traj_start_time = ros::Time::now();
+        updateTrajGoal(); 
+
+        quadrotor_msgs::FlatOutputs goal;
         goal.x = traj[0][0][0] + xoff;
         goal.y = traj[0][1][0] + yoff;
         goal.z = traj[0][2][0] + zoff;
-
-        pub_goal_min_jerk_.publish(goal);
+        goal.yaw = traj[0][3][0] + yaw_off;
+       
+        pub_goal_yaw_.publish(goal);
         controllers_manager::Transition transition_cmd;
-        transition_cmd.request.controller = line_tracker;
+        transition_cmd.request.controller = line_tracker_yaw;
         srv_transition_.call(transition_cmd);
       }
     }
@@ -247,8 +254,8 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       // If we are ready to start the trajectory
       if ( sqrt( pow(traj_goal.position.x + xoff - pos_.x, 2)
                + pow(traj_goal.position.y + yoff - pos_.y, 2)
-               + pow(traj_goal.position.z + zoff - pos_.z, 2) ) > .03 ||
-           sqrt( pow(vel_.x,2) + pow(vel_.y,2) + pow(vel_.z,2) ) > 0.05)
+               + pow(traj_goal.position.z + zoff - pos_.z, 2) ) < .07 &&
+           sqrt( pow(vel_.x,2) + pow(vel_.y,2) + pow(vel_.z,2) ) < 0.1)
       {
         ROS_INFO("Starting Trajectory");
 
@@ -271,6 +278,12 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       else
       {
         ROS_WARN("Not ready to start trajectory.");
+        cout << "rdes - r = {" 
+             << traj_goal.position.x + xoff - pos_.x 
+             << ", " << traj_goal.position.y + yoff - pos_.y 
+             << ", " << traj_goal.position.z + zoff - pos_.z 
+             << "} " <<  
+           sqrt( pow(vel_.x,2) + pow(vel_.y,2) + pow(vel_.z,2) ) << endl;
       }
     }
   }
@@ -304,7 +317,16 @@ void updateTrajGoal()
     traj_goal.acceleration.x = traj[i][0][2];
     traj_goal.acceleration.y = traj[i][1][2];
     traj_goal.acceleration.z = traj[i][2][2];
-    // traj_goal.yaw_ddot = traj[i][3][2];
+   
+    traj_goal.jerk.x = 0;
+    traj_goal.jerk.y = 0;
+    traj_goal.jerk.z = 0;
+
+    for(int i = 0; i < 3; i++)
+    {
+      traj_goal.kx[i] = kx_[i];
+      traj_goal.kv[i] = kv_[i];
+    }
   }
 }
 
@@ -390,13 +412,21 @@ int main(int argc, char **argv)
   n.param("state_control/offsets/y", yoff, 0.0);
   n.param("state_control/offsets/z", zoff, 0.0);
   n.param("state_control/offsets/yaw", yaw_off, 0.0); 
+
+  n.param("so3_control/gains/pos/x", kx_[0], 3.7);
+  n.param("so3_control/gains/pos/y", kx_[1], 3.7);
+  n.param("so3_control/gains/pos/z", kx_[2], 8.0);
+  n.param("so3_control/gains/vel/x", kv_[0], 2.4);
+  n.param("so3_control/gains/vel/y", kv_[1], 2.4);
+  n.param("so3_control/gains/vel/z", kv_[2], 3.0);
+
   ROS_INFO("Using offsets: {xoff: %2.2f, yoff: %2.2f, zoff: %2.2f, yaw_off: %2.2f}", xoff, yoff, zoff, yaw_off);
 
   n.param("state_control/traj_filename", traj_filename, string("traj.csv"));
 
   // Publishers
   srv_transition_= n.serviceClient<controllers_manager::Transition>("controllers_manager/transition");
-  pub_goal_min_jerk_ = n.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker/goal", 1);
+  pub_goal_min_jerk_ = n.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_min_jerk/goal", 1);
   pub_goal_distance_ = n.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_distance/goal", 1);
   pub_goal_velocity_ = n.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/velocity_tracker/vel_cmd", 1);
   pub_goal_yaw_ = n.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/line_tracker_yaw/goal", 1);
