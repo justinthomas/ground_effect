@@ -1,0 +1,87 @@
+<launch>
+
+  <arg name="model" default="QuadrotorAlpha" />
+  
+  <group ns="$(arg model)">
+
+    <arg name="mass" default="0.73"/> 
+    
+    <param name="mass" value="$(arg mass)" />
+    <rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml"/>
+    
+    <node pkg="nodelet"
+      type="nodelet"
+      name="standalone_nodelet"
+      args="manager"
+      output="screen"/>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_encode_msg"
+      args="load quad_encode_msg/QuadEncodeMsg standalone_nodelet"
+      output="screen">
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~serial_msg" to="to_robot"/>
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_decode_msg"
+      args="load quad_decode_msg/QuadDecodeMsg standalone_nodelet"
+      output="screen">
+      <remap from="~serial" to="from_robot"/>
+    </node>
+
+    <!-- For serial communication -->
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_serial_comm"
+      args="load quad_serial_comm/QuadSerialComm standalone_nodelet"
+      output="screen">
+      <param name="device" value="/dev/ttyUSB0"/>
+      <param name="baud_rate" value="230400"/>
+      <!-- param name="baud_rate" value="57600"/ -->
+      <remap from="~to_robot" to="to_robot"/>
+      <remap from="~from_robot" to="from_robot"/>
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="controllers_manager"
+      args="load controllers_manager/ControllersManager standalone_nodelet"
+      output="screen">
+      <rosparam file="$(find state_control_cylinder)/config/controllers.yaml"/>
+      <rosparam file="$(find state_control_cylinder)/config/controller_params.yaml"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~cmd" to="position_cmd"/>
+    </node>
+    
+    <node pkg="nodelet"
+      type="nodelet"
+      args="load so3_control/SO3ControlNodelet standalone_nodelet"
+      name="so3_control"
+      required="true"
+      output="screen">
+      <remap from="~odom" to="odom"/>
+      <remap from="~position_cmd" to="position_cmd"/>
+      <remap from="~motors" to="motors"/>
+      <remap from="~corrections" to="corrections"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <param name="mass" value="$(arg mass)" />
+      <rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml"/>
+    </node>
+    
+    <!-- This is the state control node -->
+    <rosparam file="$(find ground_effect)/config/$(arg model)_params.yaml" />
+    <node pkg="ground_effect"
+	    type="state_control"
+	    name="state_control"
+      output="screen">
+      <!-- rosparam file="$(find state_control_cylinder)/config/$(arg model)_params.yaml" / -->
+      <!-- rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml" / -->
+      <param name="safety_catch" value="true"/>
+      <!-- remap from="so3_cmd" to="so3_cmd_vision"/ -->
+    </node>
+
+  </group>
+</launch>

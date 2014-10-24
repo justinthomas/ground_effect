@@ -90,6 +90,7 @@ static const std::string velocity_tracker_str("velocity_tracker/VelocityTrackerY
 
 // Function Declarations
 void hover_in_place();
+void go_to(const quadrotor_msgs::FlatOutputs goal);
 
 // Callbacks and functions
 static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
@@ -186,14 +187,12 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
     // Line Tracker Yaw
     else if(msg->buttons[line_tracker_yaw_button] && (state_ == HOVER || state_ == LINE_TRACKER_YAW || state_ == TAKEOFF))
     {
-      state_ = LINE_TRACKER_YAW;
-      ROS_INFO("Engaging controller: LINE_TRACKER_YAW");
-      std_msgs::Float64 yaw_goal;
-      yaw_goal.data = M_PI * msg->axes[3] + yaw_off;
-      pub_goal_yaw_.publish(yaw_goal);
-      controllers_manager::Transition transition_cmd;
-      transition_cmd.request.controller = line_tracker_yaw;
-      srv_transition_.call(transition_cmd);
+      quadrotor_msgs::FlatOutputs goal;
+      goal.x = 2*msg->axes[0] + xoff;
+      goal.y = 2*msg->axes[1] + yoff;
+      goal.z = 2*msg->axes[2] + 2.0 + zoff;
+      goal.yaw = M_PI * msg->axes[3] + yaw_off;
+      go_to(goal);
     }
     // Velocity Tracker
     else if(msg->buttons[velocity_tracker_button] && state_ == HOVER)
@@ -335,6 +334,16 @@ void hover_in_place()
   srv_transition_.call(transition_cmd);
 }
 
+void go_to(const quadrotor_msgs::FlatOutputs goal)
+{
+  state_ = LINE_TRACKER_YAW;
+  ROS_INFO("Engaging controller: LINE_TRACKER_YAW");
+  pub_goal_yaw_.publish(goal);
+  controllers_manager::Transition transition_cmd;
+  transition_cmd.request.controller = line_tracker_yaw;
+  srv_transition_.call(transition_cmd);
+}
+
 static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
 {
   have_odom_ = true;
@@ -390,7 +399,7 @@ int main(int argc, char **argv)
   pub_goal_min_jerk_ = n.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker/goal", 1);
   pub_goal_distance_ = n.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_distance/goal", 1);
   pub_goal_velocity_ = n.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/velocity_tracker/vel_cmd", 1);
-  pub_goal_yaw_ = n.advertise<std_msgs::Float64>("controllers_manager/line_tracker_yaw/goal", 1);
+  pub_goal_yaw_ = n.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/line_tracker_yaw/goal", 1);
   pub_info_bool_ = n.advertise<std_msgs::Bool>("traj_signal", 1);
   pub_motors_ = n.advertise<std_msgs::Bool>("motors", 1);
   pub_estop_ = n.advertise<std_msgs::Empty>("estop", 1);
