@@ -15,7 +15,5 @@
   <depend package="controllers_manager"/>
   <depend package="velocity_tracker"/>
   <depend package="line_tracker"/>
-  <depend package="trajectory_tracker"/>
+  <depend package="null_tracker"/>
 </package>
-
-

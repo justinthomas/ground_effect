@@ -1,0 +1,5 @@
+Things to do:
+
+25 trials (eventually > 100) at each of 3 different heights (0, r, 2r, 3r, ... ?)
+
+25 trials @ varying payloads (0g, 100g, 200g)
