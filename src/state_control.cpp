@@ -15,7 +15,7 @@
 #include <iostream>
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/PositionCommand.h>
-#include <vector>
+#include "trajectory.h"
 using namespace std;
 
 #define SAFETY_ON
@@ -55,8 +55,6 @@ geometry_msgs::Point goal;
 // =======================
 // Stuff for trajectory
 // =======================
-#include <string>
-typedef std::vector< std::vector< std::vector<double> > > traj_type;
 traj_type traj;
 ros::Time traj_start_time;
 double traj_time;
@@ -65,7 +63,6 @@ quadrotor_msgs::PositionCommand traj_goal;
 static const std::string trajectory_tracker_str("null_tracker/NullTracker");
 void updateTrajGoal();
 static std::string traj_filename;
-int loadTraj(const std::string &filename, traj_type &traj);
 // =======================
 
 // Publishers & services

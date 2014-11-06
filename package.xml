@@ -1,0 +1,33 @@
+<package>
+  <name>ground_effect</name>
+  <version>0.0.1</version>
+  <description>
+  This package contains the state control node and trajectory generator for the surface effects project
+  </description>
+  <maintainer email="jut@seas.upenn.edu">Justin Thomas</maintainer>
+  <license>BSD</license>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>quadrotor_msgs</build_depend>
+  <build_depend>controllers_manager</build_depend>
+  <build_depend>velocity_tracker</build_depend>
+  <build_depend>line_tracker</build_depend>
+  <build_depend>null_tracker</build_depend>
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>roscpp</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>quadrotor_msgs</run_depend>
+  <run_depend>controllers_manager</run_depend>
+  <run_depend>velocity_tracker</run_depend>
+  <run_depend>line_tracker</run_depend>
+  <run_depend>null_tracker</run_depend>
+
+</package>
