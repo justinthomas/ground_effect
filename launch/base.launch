@@ -4,14 +4,14 @@
 
   <!-- Launch vicon odometry for each robot -->
   <include file="$(find vicon_odom)/launch/ViconOdom.launch">
-    <arg name="model" value="QuadrotorAlpha" />
+    <arg name="model" value="QuadrotorKilo" />
   </include>
 
   <!-- This is for the MIDI controller -->
-  <node pkg="korg_nanokontrol2"
+  <!-- node pkg="korg_nanokontrol2"
     type="kontrol.py"
     name="korg_nanokontrol"
     output="screen" 
-    args="5"/>
+    args="5"/ -->
 
 </launch>
