@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <controllers_manager/Transition.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/Vector3Stamped.h>
@@ -252,9 +253,9 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
     else if(msg->buttons[play_button] && state_ == PREP_TRAJ)
     {
       // If we are ready to start the trajectory
-      if ( sqrt( pow(traj_goal.position.x + xoff - pos_.x, 2)
-               + pow(traj_goal.position.y + yoff - pos_.y, 2)
-               + pow(traj_goal.position.z + zoff - pos_.z, 2) ) < .07 &&
+      if ( sqrt( pow(traj_goal.position.x - pos_.x, 2)
+               + pow(traj_goal.position.y - pos_.y, 2)
+               + pow(traj_goal.position.z - pos_.z, 2) ) < .07 &&
            sqrt( pow(vel_.x,2) + pow(vel_.y,2) + pow(vel_.z,2) ) < 0.1)
       {
         ROS_INFO("Starting Trajectory");
