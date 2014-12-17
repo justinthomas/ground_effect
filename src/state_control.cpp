@@ -22,7 +22,6 @@
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
-#include "kr_common/termcolor.hpp"
 
 // Local Includes
 // #include "state_control.h"
@@ -31,7 +30,13 @@
 
 using namespace std;
 
-#define SAFETY_ON
+#define RED "\e[91m"
+#define GREEN "\e[92m"
+#define YELLOW "\e[93m"
+#define BLUE "\e[94m"
+#define MAGENTA "\e[95m"
+#define CYAN "\e[96m"
+#define RESET "\e[0m"
 
 // State machine
 enum controller_state
@@ -426,7 +431,7 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
         state_ = TRAJ;
         traj_num_++;
         
-        std::cout << tc::green << "Starting trajectory " << traj_num_ << tc::reset << std::endl;
+        std::cout << GREEN << "Starting trajectory " << traj_num_ << RESET << std::endl;
 
         // Publish the trajectory signal
         std_msgs::Bool traj_on_signal;
@@ -458,7 +463,7 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
   if (state_ == HOME && (norm(pos_, home_) < 0.1 || play_button_pressed))
   {
     motors_on(false);
-    cout << tc::red << "Stopping motors..." << tc::reset << endl;
+    cout << RED << "Stopping motors..." << RESET << endl;
     state_ = INIT;
   }
   else if (state_ == HOME)
@@ -478,7 +483,7 @@ void motors_on(const bool flag)
   motors_on_ = flag;
 
   std::string message = flag ? "Turning motors on..." : "Turning motors off...";
-  cout << tc::yellow << message.c_str() << tc::reset << endl;
+  cout << YELLOW << message.c_str() << RESET << endl;
   std_msgs::Bool motors_cmd;
   motors_cmd.data = flag;
   pub_motors_.publish(motors_cmd);

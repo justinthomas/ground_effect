@@ -19,7 +19,6 @@
   <build_depend>velocity_tracker</build_depend>
   <build_depend>line_tracker</build_depend>
   <build_depend>null_tracker</build_depend>
-  <build_depend>kr_common</build_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>roscpp</run_depend>
@@ -32,5 +31,4 @@
   <run_depend>velocity_tracker</run_depend>
   <run_depend>line_tracker</run_depend>
   <run_depend>null_tracker</run_depend>
-  <run_depend>kr_common</run_depend>
 </package>
