@@ -16,7 +16,6 @@
 #include <sensor_msgs/Imu.h>
 #include <tf/transform_datatypes.h>
 #include <tf/LinearMath/Matrix3x3.h>
-#include <tf/transform_broadcaster.h>
 
 // Custom Includes
 #include <controllers_manager/Transition.h>
@@ -242,6 +241,14 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       {
         state_ = PREP_TRAJ;
         ROS_INFO("Successfully loaded trajectory: %s.", traj_filename.c_str());
+
+        quadrotor_msgs::FlatOutputs goal;
+        goal.x = traj[0][0][0] + xoff;
+        goal.y = traj[0][1][0] + yoff;
+        goal.z = traj[0][2][0] + zoff;
+        goal.yaw = traj[0][3][0] + yaw_off;
+
+        go_to(goal);
       }
       else
       {
@@ -264,13 +271,21 @@ void updateTrajGoal()
   {
     ROS_INFO("Trajectory completed.");
 
-    // Get ready to run the next trajectory
-    state_ = PREP_TRAJ;
-
     // Publish the trajectory signal
     std_msgs::Bool traj_on_signal;
     traj_on_signal.data = false;
     pub_traj_signal_.publish(traj_on_signal);
+
+    // Get ready to run the next trajectory
+    state_ = PREP_TRAJ;
+    
+    quadrotor_msgs::FlatOutputs goal;
+    goal.x = traj[0][0][0] + xoff;
+    goal.y = traj[0][1][0] + yoff;
+    goal.z = traj[0][2][0] + zoff;
+    goal.yaw = traj[0][3][0] + yaw_off;
+
+    go_to(goal);
   }
   else
   {
@@ -336,8 +351,6 @@ void hover_in_place()
 
 void go_to(const quadrotor_msgs::FlatOutputs &goal)
 {
-  state_ = LINE_TRACKER_YAW;
-  ROS_INFO("Engaging controller: LINE_TRACKER_YAW");
   pub_goal_yaw_.publish(goal);
   controllers_manager::Transition transition_cmd;
   transition_cmd.request.controller = line_tracker_yaw;
@@ -346,7 +359,6 @@ void go_to(const quadrotor_msgs::FlatOutputs &goal)
 
 void go_to(const geometry_msgs::Point &goal)
 {
-  state_ = LINE_TRACKER_DISTANCE;
   pub_goal_distance_.publish(goal);
   usleep(100000);
   controllers_manager::Transition transition_cmd;
@@ -364,13 +376,6 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
   geometry_msgs::Quaternion odom_q;
   odom_q = msg->pose.pose.orientation;
   tf::quaternionMsgToTF(odom_q, odom_q_);
-
-  // For simulation, broadcast the quadrotor frame
-  static tf::TransformBroadcaster br;
-  tf::Transform transform;
-  transform.setOrigin( tf::Vector3(pos_.x, pos_.y, pos_.z) );
-  transform.setRotation(odom_q_);
-  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/simulator", "/quadrotor"));
 
   // If we are currently executing a trajectory, update the setpoint
   if (state_ == TRAJ)
@@ -408,24 +413,6 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
     traj_start_time = ros::Time::now();
     updateTrajGoal();
 
-    // Only call the service once per trajectory number
-    static int next_traj_num = 0;
-    if (next_traj_num == traj_num_)
-    {
-      quadrotor_msgs::FlatOutputs goal;
-      goal.x = traj[0][0][0] + xoff;
-      goal.y = traj[0][1][0] + yoff;
-      goal.z = traj[0][2][0] + zoff;
-      goal.yaw = traj[0][3][0] + yaw_off;
-
-      pub_goal_yaw_.publish(goal);
-      controllers_manager::Transition transition_cmd;
-      transition_cmd.request.controller = line_tracker_yaw;
-      srv_transition_.call(transition_cmd);
-
-      next_traj_num++;
-    }
-
     // If we are ready to start the trajectory
     if (sqrt( pow(traj_goal.position.x - pos_.x, 2)
              + pow(traj_goal.position.y - pos_.y, 2)
@@ -433,7 +420,7 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
          sqrt( pow(vel_.x,2) + pow(vel_.y,2) + pow(vel_.z,2) ) < 0.1)
     {
       if (!play_button_pressed)
-        ROS_INFO_THROTTLE(1, "Ready to start the trajectory...");
+        ROS_INFO_THROTTLE(2, "Ready to start the trajectory. Press play to continue...");
       else
       {
         state_ = TRAJ;
@@ -458,21 +445,24 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
     }
     else
     {
-      ROS_WARN("Not ready to start trajectory.");
-      cout << "rdes - r = {"
-           << traj_goal.position.x + xoff - pos_.x
-           << ", " << traj_goal.position.y + yoff - pos_.y
-           << ", " << traj_goal.position.z + zoff - pos_.z
-           << "} " <<
-         sqrt( pow(vel_.x,2) + pow(vel_.y,2) + pow(vel_.z,2) ) << endl;
+      ROS_WARN_THROTTLE(2, "Not ready to start trajectory.");
+      // cout << "rdes - r = {"
+      //      << traj_goal.position.x + xoff - pos_.x
+      //      << ", " << traj_goal.position.y + yoff - pos_.y
+      //      << ", " << traj_goal.position.z + zoff - pos_.z
+      //      << "} " <<
+      //    sqrt( pow(vel_.x,2) + pow(vel_.y,2) + pow(vel_.z,2) ) << endl;
     }
   }
 
   if (state_ == HOME && (norm(pos_, home_) < 0.1 || play_button_pressed))
   {
     motors_on(false);
+    cout << tc::red << "Stopping motors..." << tc::reset << endl;
     state_ = INIT;
   }
+  else if (state_ == HOME)
+    ROS_INFO_THROTTLE(1, "Going home...");
 }
 
 double norm(const geometry_msgs::Point &a, const geometry_msgs::Point &b)
@@ -507,7 +497,7 @@ void motors_on(const bool flag)
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "state_control");
-  ros::NodeHandle n("~");
+  ros::NodeHandle n;
 
   // Position offsets for this robot
   n.param("offsets/x", xoff, 0.0);
@@ -516,7 +506,7 @@ int main(int argc, char **argv)
   n.param("offsets/yaw", yaw_off, 0.0);
   ROS_INFO("Using offsets: {xoff: %2.2f, yoff: %2.2f, zoff: %2.2f, yaw_off: %2.2f}", xoff, yoff, zoff, yaw_off);
 
-  n.param("traj_filename", traj_filename, string(""));
+  n.param("state_control/traj_filename", traj_filename, string(""));
 
   // Publishers
   srv_transition_= n.serviceClient<controllers_manager::Transition>("controllers_manager/transition");
