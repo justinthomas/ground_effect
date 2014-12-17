@@ -70,18 +70,5 @@
       <param name="mass" value="$(arg mass)" />
     </node>
     
-    <!-- This is the state control node -->
-    <rosparam file="$(find ground_effect)/config/$(arg model)_params.yaml" />
-    <node pkg="ground_effect"
-	    type="state_control"
-	    name="state_control"
-      output="screen">
-      <!-- rosparam file="$(find state_control_cylinder)/config/$(arg model)_params.yaml" / -->
-      <!-- rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml" / -->
-      <param name="traj_filename" type="string" value="~/catkin_ws/src/ground_effect/traj.csv"/>
-      <param name="safety_catch" value="true"/>
-      <!-- remap from="so3_cmd" to="so3_cmd_vision"/ -->
-    </node>
-
   </group>
 </launch>
