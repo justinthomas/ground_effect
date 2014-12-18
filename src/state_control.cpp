@@ -118,7 +118,7 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
     pub_estop_.publish(estop_cmd);
 
     motors_on(false);
-    
+
     state_ = ESTOP;
   }
 
@@ -283,7 +283,7 @@ void updateTrajGoal()
 
     // Get ready to run the next trajectory
     state_ = PREP_TRAJ;
-    
+
     quadrotor_msgs::FlatOutputs goal;
     goal.x = traj[0][0][0] + xoff;
     goal.y = traj[0][1][0] + yoff;
@@ -357,6 +357,7 @@ void hover_in_place()
 void go_to(const quadrotor_msgs::FlatOutputs &goal)
 {
   pub_goal_yaw_.publish(goal);
+  usleep(100000);
   controllers_manager::Transition transition_cmd;
   transition_cmd.request.controller = line_tracker_yaw;
   srv_transition_.call(transition_cmd);
@@ -392,7 +393,7 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
     traj_num_msg.data = traj_num_;
     pub_traj_num_.publish(traj_num_msg);
   }
- 
+
   // For the safety check
   tf::Quaternion q = odom_q_;
   static double roll, pitch, yaw;
@@ -411,7 +412,7 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
       hover_in_place();
     }
   #endif
-  
+
   if(state_ == PREP_TRAJ)
   {
     // Updates traj goal to allow for correct initalization of the trajectory
@@ -421,32 +422,27 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
     // If we are ready to start the trajectory
     if (sqrt( pow(traj_goal.position.x - pos_.x, 2)
              + pow(traj_goal.position.y - pos_.y, 2)
-             + pow(traj_goal.position.z - pos_.z, 2) ) < .03 &&
+             + pow(traj_goal.position.z - pos_.z, 2) ) < 0.1 &&
          sqrt( pow(vel_.x,2) + pow(vel_.y,2) + pow(vel_.z,2) ) < 0.1)
     {
-      if (!play_button_pressed)
-        ROS_INFO_THROTTLE(2, "Ready to start the trajectory. Press play to continue...");
-      else
-      {
-        state_ = TRAJ;
-        traj_num_++;
-        
-        std::cout << GREEN << "Starting trajectory " << traj_num_ << RESET << std::endl;
+      state_ = TRAJ;
+      traj_num_++;
 
-        // Publish the trajectory signal
-        std_msgs::Bool traj_on_signal;
-        traj_on_signal.data = true;
-        pub_traj_signal_.publish(traj_on_signal);
+      std::cout << GREEN << "Starting trajectory " << traj_num_ << RESET << std::endl;
 
-        traj_start_time = ros::Time::now();
+      // Publish the trajectory signal
+      std_msgs::Bool traj_on_signal;
+      traj_on_signal.data = true;
+      pub_traj_signal_.publish(traj_on_signal);
 
-        updateTrajGoal();
+      traj_start_time = ros::Time::now();
 
-        pub_goal_trajectory_.publish(traj_goal);
-        controllers_manager::Transition transition_cmd;
-        transition_cmd.request.controller = null_tracker_str;
-        srv_transition_.call(transition_cmd);
-      }
+      updateTrajGoal();
+
+      pub_goal_trajectory_.publish(traj_goal);
+      controllers_manager::Transition transition_cmd;
+      transition_cmd.request.controller = null_tracker_str;
+      srv_transition_.call(transition_cmd);
     }
     else
     {
@@ -497,7 +493,7 @@ void motors_on(const bool flag)
   quadrotor_msgs::SO3Command::Ptr cmd(new quadrotor_msgs::SO3Command);
   cmd->aux.enable_motors = flag;
   pub_so3_command_.publish(cmd);
-} 
+}
 
 int main(int argc, char **argv)
 {

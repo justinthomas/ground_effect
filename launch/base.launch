@@ -1,24 +1,80 @@
 <launch>
 
-  <include file="$(find vicon)/launch/vicon.launch" />
+  <arg name="model" value="QuadrotorKilo" />
+  <arg name="mass" value="0.533" />
 
+  <include file="$(find vicon)/launch/vicon.launch" />
   <!-- Launch vicon odometry for each robot -->
   <include file="$(find vicon_odom)/launch/ViconOdom.launch">
-    <arg name="model" value="QuadrotorKilo" />
+    <arg name="model" value="$(arg model)" />
   </include>
+  
+  <group ns="$(arg model)">
+    
+    <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
 
-  <!-- This is the state control node -->
-  <rosparam file="$(find ground_effect)/config/$(arg model)_params.yaml" />
-  <node pkg="ground_effect"
-	  type="state_control"
-	  name="state_control"
-    output="screen">
-    <!-- rosparam file="$(find state_control_cylinder)/config/$(arg model)_params.yaml" / -->
-    <!-- rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml" / -->
-    <param name="traj_filename" type="string" value="~/catkin_ws/src/ground_effect/traj.csv"/>
-    <param name="safety_catch" value="true"/>
-    <!-- remap from="so3_cmd" to="so3_cmd_vision"/ -->
-  </node>
+    <node pkg="nodelet"
+     type="nodelet"
+     name="standalone_nodelet"
+     args="manager"
+     output="screen"/>
+
+    <node pkg="nodelet"
+     type="nodelet"
+     name="controllers_manager"
+     args="load controllers_manager/ControllersManager standalone_nodelet"
+     output="screen">
+     <rosparam file="$(find ground_effect)/config/controllers.yaml"/>
+     <rosparam file="$(find ground_effect)/config/controller_params.yaml"/>
+     <remap from="~odom" to="odom"/>
+     <remap from="~cmd" to="position_cmd"/>
+    </node>
+    
+    <node pkg="nodelet"
+      type="nodelet"
+      args="load so3_control/SO3ControlNodelet standalone_nodelet"
+      name="so3_control"
+      required="true"
+      output="screen">
+      <remap from="~odom" to="odom"/>
+      <remap from="~position_cmd" to="position_cmd"/>
+      <remap from="~motors" to="motors"/>
+      <remap from="~corrections" to="corrections"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <param name="mass" value="$(arg mass)" />
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_encode_msg"
+      args="load quad_encode_msg/QuadEncodeMsg standalone_nodelet"
+      output="screen">
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~serial_msg" to="to_robot"/>
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_decode_msg"
+      args="load quad_decode_msg/QuadDecodeMsg standalone_nodelet"
+      output="screen">
+      <remap from="~serial" to="from_robot"/>
+    </node>
+
+    <!-- This is the state control node -->
+    <rosparam file="$(find ground_effect)/config/$(arg model)_params.yaml" />
+    <node pkg="ground_effect"
+      type="state_control"
+      name="state_control"
+      output="screen">
+      <!-- rosparam file="$(find state_control_cylinder)/config/$(arg model)_params.yaml" / -->
+      <!-- rosparam file="$(find state_control_cylinder)/config/hummingbird_gains.yaml" / -->
+      <param name="traj_filename" type="string" value="/home/justin/catkin_ws/src/ground_effect/traj.csv"/>
+      <param name="safety_catch" value="true"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+    </node>
+
+  </group>
 
   <!-- This is for the MIDI controller -->
   <!-- node pkg="korg_nanokontrol2"
