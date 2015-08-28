@@ -18,7 +18,7 @@
 #include <tf/LinearMath/Matrix3x3.h>
 
 // Custom Includes
-#include <controllers_manager/Transition.h>
+#include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
@@ -39,7 +39,7 @@ using namespace std;
 #define RESET "\e[0m"
 
 // State machine
-enum controller_state
+enum tracker_state
 {
   ESTOP,
   INIT,
@@ -56,7 +56,7 @@ enum controller_state
   TRAJ,
   NONE,
 };
-static enum controller_state state_ = INIT;
+static enum tracker_state state_ = INIT;
 
 // Variables and parameters
 double xoff, yoff, zoff, yaw_off;
@@ -200,8 +200,8 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       goal.y = 2*msg->axes[1] + yoff;
       goal.z = msg->axes[2] + .9 + zoff;
       pub_goal_min_jerk_.publish(goal);
-      controllers_manager::Transition transition_cmd;
-      transition_cmd.request.controller = line_tracker;
+      trackers_manager::Transition transition_cmd;
+      transition_cmd.request.tracker = line_tracker;
       srv_transition_.call(transition_cmd);
     }
     // Line Tracker Yaw
@@ -230,8 +230,8 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       vel_goal.z = 0;
       vel_goal.yaw = 0;
       pub_goal_velocity_.publish(vel_goal);
-      controllers_manager::Transition transition_cmd;
-      transition_cmd.request.controller = velocity_tracker_str;
+      trackers_manager::Transition transition_cmd;
+      transition_cmd.request.tracker = velocity_tracker_str;
       srv_transition_.call(transition_cmd);
     }
     else if(msg->buttons[traj_button] && state_ == HOVER)
@@ -349,8 +349,8 @@ void hover_in_place()
   goal.z = pos_.z;
   pub_goal_distance_.publish(goal);
   usleep(100000);
-  controllers_manager::Transition transition_cmd;
-  transition_cmd.request.controller = line_tracker_distance;
+  trackers_manager::Transition transition_cmd;
+  transition_cmd.request.tracker = line_tracker_distance;
   srv_transition_.call(transition_cmd);
 }
 
@@ -358,8 +358,8 @@ void go_to(const quadrotor_msgs::FlatOutputs &goal)
 {
   pub_goal_yaw_.publish(goal);
   usleep(100000);
-  controllers_manager::Transition transition_cmd;
-  transition_cmd.request.controller = line_tracker_yaw;
+  trackers_manager::Transition transition_cmd;
+  transition_cmd.request.tracker = line_tracker_yaw;
   srv_transition_.call(transition_cmd);
 }
 
@@ -367,8 +367,8 @@ void go_to(const geometry_msgs::Point &goal)
 {
   pub_goal_distance_.publish(goal);
   usleep(100000);
-  controllers_manager::Transition transition_cmd;
-  transition_cmd.request.controller = line_tracker_distance;
+  trackers_manager::Transition transition_cmd;
+  transition_cmd.request.tracker = line_tracker_distance;
   srv_transition_.call(transition_cmd);
 }
 
@@ -440,8 +440,8 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
       updateTrajGoal();
 
       pub_goal_trajectory_.publish(traj_goal);
-      controllers_manager::Transition transition_cmd;
-      transition_cmd.request.controller = null_tracker_str;
+      trackers_manager::Transition transition_cmd;
+      transition_cmd.request.tracker = null_tracker_str;
       srv_transition_.call(transition_cmd);
     }
     else
@@ -485,8 +485,8 @@ void motors_on(const bool flag)
   pub_motors_.publish(motors_cmd);
 
   // Switch to null_tracker so that the trackers do not publish so3_commands
-  controllers_manager::Transition transition_cmd;
-  transition_cmd.request.controller = null_tracker_str;
+  trackers_manager::Transition transition_cmd;
+  transition_cmd.request.tracker = null_tracker_str;
   srv_transition_.call(transition_cmd);
 
   // Create and publish the so3_command
@@ -510,11 +510,11 @@ int main(int argc, char **argv)
   n.param("state_control/traj_filename", traj_filename, string(""));
 
   // Publishers
-  srv_transition_= n.serviceClient<controllers_manager::Transition>("controllers_manager/transition");
-  pub_goal_min_jerk_ = n.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_min_jerk/goal", 1);
-  pub_goal_distance_ = n.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_distance/goal", 1);
-  pub_goal_velocity_ = n.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/velocity_tracker/vel_cmd", 1);
-  pub_goal_yaw_ = n.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/line_tracker_yaw/goal", 1);
+  srv_transition_= n.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
+  pub_goal_min_jerk_ = n.advertise<geometry_msgs::Vector3>("trackers_manager/line_tracker_min_jerk/goal", 1);
+  pub_goal_distance_ = n.advertise<geometry_msgs::Vector3>("trackers_manager/line_tracker_distance/goal", 1);
+  pub_goal_velocity_ = n.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/vel_cmd", 1);
+  pub_goal_yaw_ = n.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/line_tracker_yaw/goal", 1);
   pub_traj_signal_ = n.advertise<std_msgs::Bool>("traj_signal", 1);
   pub_motors_ = n.advertise<std_msgs::Bool>("motors", 1);
   pub_estop_ = n.advertise<std_msgs::Empty>("estop", 1);
