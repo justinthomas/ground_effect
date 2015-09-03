@@ -5,7 +5,7 @@
 
   <include file="$(find vicon)/launch/vicon.launch" />
   <!-- Launch vicon odometry for each robot -->
-  <include file="$(find vicon_odom)/launch/ViconOdom.launch">
+  <include file="$(find vicon_odom)/launch/vicon_odom.launch">
     <arg name="model" value="$(arg model)" />
   </include>
   
