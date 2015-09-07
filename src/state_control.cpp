@@ -193,12 +193,34 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
   // If we are currently executing a trajectory, update the setpoint
   if (state_ == TRAJ)
   {
-    traj.UpdateGoal(traj_goal);
-    mav->setPositionCommand(traj_goal);
+    if (traj.isCompleted())
+    {
+      // Publish the trajectory signal
+      std_msgs::Bool traj_on_signal;
+      traj_on_signal.data = false;
+      pub_traj_signal_.publish(traj_on_signal);
 
-    std_msgs::Int16 traj_num_msg;
-    traj_num_msg.data = traj_num_;
-    pub_traj_num_.publish(traj_num_msg);
+      // Reset the trajectory and start again
+      traj.set_start_time();
+      traj.UpdateGoal(traj_goal);
+
+      double x = traj_goal.position.x;
+      double y = traj_goal.position.y;
+      double z = traj_goal.position.z;
+      double yaw = traj_goal.yaw;
+
+      if (mav->goTo(x, y, z, yaw))
+        state_ = PREP_TRAJ;
+    }
+    else
+    {
+      traj.UpdateGoal(traj_goal);
+      mav->setPositionCommand(traj_goal);
+
+      std_msgs::Int16 traj_num_msg;
+      traj_num_msg.data = traj_num_;
+      pub_traj_num_.publish(traj_num_msg);
+    }
   }
 
   if(state_ == PREP_TRAJ)
