@@ -1,10 +1,9 @@
 <launch>
   
-  <arg name="model" default="quadrotor"/>
-  <arg name="sim" value="1"/>
-  <arg name="vicon" value="1"/>
+  <arg name="model" default="QuadrotorKilo"/>
+  <arg name="sim" value="0"/>
+  <arg name="vicon" value="0"/>
   <arg name="vicon_fps" value="100"/>
-  <arg name="slow_baud_rate" value="true"/>
   <arg name="mass" default="0.5"/>
 
   <!-- Launch vicon odometry node -->
@@ -78,20 +77,6 @@
       <remap from="~odom" to="odom"/>
     </node>
 
-    <!-- For serial communication -->
-    <node pkg="nodelet"
-      type="nodelet"
-      name="quad_serial_comm"
-      args="load quad_serial_comm/QuadSerialComm standalone_nodelet"
-      output="screen"
-      unless="$(arg sim)">
-      <param name="device" value="/dev/ttyUSB0"/>
-      <param name="baud_rate" value="57600" if="$(arg slow_baud_rate)"/>
-      <param name="baud_rate" value="230400" unless="$(arg slow_baud_rate)"/>
-      <remap from="~to_robot" to="to_robot"/>
-      <remap from="~from_robot" to="from_robot"/>
-    </node>
-
     <node pkg="nodelet"
       type="nodelet"
       name="quad_encode_msg"
@@ -118,6 +103,7 @@
       name="state_control"
       output="screen">
       <param name="traj_filename" type="string" value="/home/justin/catkin_ws/src/ground_effect/traj.csv"/>
+      <rosparam file="$(find ground_effect)/config/mav_manager_params.yaml" />
       <remap from="~so3_cmd" to="so3_cmd"/>
     </node>
 
