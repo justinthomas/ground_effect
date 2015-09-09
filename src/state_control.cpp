@@ -72,7 +72,6 @@ static ros::Publisher pub_traj_num_;
 
 // Quadrotor Pose
 static geometry_msgs::Point goal;
-// static bool imu_info_(false), motors_on_(false);
 
 // Function Prototypes
 double norm(const geometry_msgs::Point &a, const geometry_msgs::Point &b);
@@ -96,7 +95,7 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
   {
     // Motors on (Rec)
     if(msg->buttons[motors_on_button])
-      mav->motors(true);
+      mav->set_motors(true);
 
     // Take off (Play)
     if(msg->buttons[play_button])
