@@ -2,9 +2,9 @@
   
   <arg name="model" default="QuadrotorKilo"/>
   <arg name="sim" value="0"/>
-  <arg name="vicon" value="0"/>
+  <arg name="vicon" value="1"/>
   <arg name="vicon_fps" value="100"/>
-  <arg name="mass" default="0.5"/>
+  <arg name="mass" default="0.540"/>
 
   <!-- Launch vicon odometry node -->
   <group if="$(arg vicon)">
@@ -44,8 +44,7 @@
       args="load trackers_manager/TrackersManager standalone_nodelet"
       output="screen">
       <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
-      <rosparam file="$(find so3_control)/config/gains.yaml"/>
-      <rosparam file="$(find mav_manager)/config/hummingbird_gains.yaml"/>
+      <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="position_cmd"/>
     </node>
@@ -56,7 +55,7 @@
       name="so3_control"
       required="true"
       output="screen">
-      <rosparam file="$(find so3_control)/config/gains.yaml"/>
+      <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
       <param name="mass" value="$(arg mass)"/>
       <remap from="~odom" to="odom"/>
       <remap from="~position_cmd" to="position_cmd"/>
@@ -102,7 +101,7 @@
       type="state_control"
       name="state_control"
       output="screen">
-      <param name="traj_filename" type="string" value="/home/justin/catkin_ws/src/ground_effect/traj.csv"/>
+      <param name="traj_filename" type="string" value="/home/justin/Dropbox/papers_and_posters/Ground_Effect/data/payload_000g/speed_000_cmps/height_0r/traj.csv"/>
       <rosparam file="$(find ground_effect)/config/mav_manager_params.yaml" />
       <remap from="~so3_cmd" to="so3_cmd"/>
     </node>

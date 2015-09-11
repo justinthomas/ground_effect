@@ -1,7 +1,9 @@
 Things to do:
 
-25 trials (eventually > 100) at each of 3 different heights (0, r, 2r, 3r, ... ?)
+50 trials (eventually > 100) @ each of 3 different heights (0, r, 2r, 3r, ... ?)
 
-25 trials @ varying payloads (0g, 100g, 200g)
+50 trials (eventually > 100) @ varying payloads (0g, 150g, 300g)
 
-rosbag record /QuadrotorKilo/motors /QuadrotorKilo/odom /QuadrotorKilo/position_cmd /QuadrotorKilo/quad_decode_msg/output_data /QuadrotorKilo/so3_cmd /QuadrotorKilo/traj_num /QuadrotorKilo/traj_signal /nanokontrol2 /vicon/QuadrotorKilo
+Different speeds: (0m/s, 0.5m/s, 1m/s); Do 0m/s first and use results to evaluate if we want to do 0.5m/s or greater
+
+rosbag record /QuadrotorKilo/motors /QuadrotorKilo/odom /QuadrotorKilo/position_cmd /QuadrotorKilo/quad_decode_msg/output_data /QuadrotorKilo/so3_cmd /QuadrotorKilo/traj_num /QuadrotorKilo/traj_signal /nanokontrol2
