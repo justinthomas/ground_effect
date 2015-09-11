@@ -83,7 +83,18 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
   {
     // Publish the E-Stop command
     if (mav->estop())
+    {
       state_ = ESTOP;
+      return;
+    }
+  }
+  if(msg->buttons[eland_button])
+  {
+    if (mav->eland())
+    {
+      state_ = LAND;
+      return;
+    }
   }
 
   play_button_pressed = msg->buttons[play_button];
@@ -140,7 +151,7 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       if (mav->hover())
         state_ = HOVER;
     }
-    else if(msg->buttons[7])
+    else if(msg->buttons[home_button])
     {
       state_ = HOME;
       mav->goHome();
