@@ -3,12 +3,25 @@ clear
 close all
 clc
 
+z_clear = 2; % z-height that is considered out of ground effect
+r = 0.1; % m
+bottom_height = 0*r;
+
+% % For trials in motion
+% transition_time = 5; % s
+% bottom_distance = 1.5; % m
+% bottom_velocity = .5; % m/s
+% bottom_time = bottom_distance / bottom_velocity;
+% xmax = 1.8; % Extent in the x-plane of the trajectory
+
 transition_time = 5; % s
-bottom_distance = 2; % m
-bottom_velocity = .5; % m/s
+bottom_time = 3;
+bottom_distance = 0; % m
+bottom_velocity = bottom_distance / bottom_time; % m/s
+
+xmax = 0; % Extent in the x-plane of the trajectory
 
 % The time vector
-bottom_time = bottom_distance / bottom_velocity;
 t = [0, transition_time, transition_time + bottom_time, 2*transition_time + bottom_time];
 
 % Return
@@ -24,43 +37,42 @@ traj_kv = [2.4*ones(1,2), 3.0];
 % identically zero
 
 d = 2;
-z_clear = 1.8;
 
 % Trajectory Start
 waypoints(1) = ZeroWaypoint(t(1), d);
-waypoints(1).pos = [-2; z_clear];
+waypoints(1).pos = [-xmax; z_clear];
 
 % Start of bottom
-waypoints(2) = ZeroWaypoint(t(2), d);
-waypoints(2).pos(1) = -bottom_distance/2;
-waypoints(2).vel(1) = bottom_velocity;
+waypoints(end+1) = ZeroWaypoint(t(2), d);
+waypoints(end).pos = [-bottom_distance/2, bottom_height];
+waypoints(end).vel(1) = bottom_velocity;
 
 % End of bottom
-waypoints(3) = ZeroWaypoint(t(3), d);
-waypoints(3).pos(1) = bottom_distance/2;
-waypoints(3).vel(1) = bottom_velocity;
+waypoints(end+1) = ZeroWaypoint(t(3), d);
+waypoints(end).pos = [bottom_distance/2, bottom_height];
+waypoints(end).vel(1) = bottom_velocity;
 
 % Trajectory End
-waypoints(4) = ZeroWaypoint(t(4), d);
-waypoints(4).pos = [2; z_clear];
+waypoints(end+1) = ZeroWaypoint(t(4), d);
+waypoints(end).pos = [xmax; z_clear];
 
 %% Trajectory Return
 
 % Start of bottom
-waypoints(5) = ZeroWaypoint(t(5), d);
-waypoints(5).pos = [bottom_distance/2; z_clear];
-waypoints(5).vel(1) = -bottom_velocity;
+waypoints(end+1) = ZeroWaypoint(t(5), d);
+waypoints(end).pos = [bottom_distance/2; z_clear];
+waypoints(end).vel(1) = -bottom_velocity;
 
 % End of bottom
-waypoints(6) = ZeroWaypoint(t(6), d);
-waypoints(6).pos = [-bottom_distance/2; z_clear];
-waypoints(6).vel(1) = -bottom_velocity;
+waypoints(end+1) = ZeroWaypoint(t(6), d);
+waypoints(end).pos = [-bottom_distance/2; z_clear];
+waypoints(end).vel(1) = -bottom_velocity;
 
 % Trajectory End
-waypoints(7) = ZeroWaypoint(t(7), d);
-waypoints(7).pos = waypoints(1).pos;
+waypoints(end+1) = ZeroWaypoint(t(7), d);
+waypoints(end).pos = waypoints(1).pos;
 
-options = {'ndim',2 ,'order',9, 'minderiv',[4,4]};
+options = {'ndim',2 ,'order',11, 'minderiv',[4,4], 'numerical', false};
 
 % Generate the trajectory
 traj = trajgen(waypoints, options);
@@ -71,6 +83,7 @@ PlotTraj(traj)
 
 ntraj = TrajEval(traj, 0:0.001:traj.keytimes(end));
 
+figure();
 plot(ntraj(:,1,1), ntraj(:,2,1), '.')
 axis equal
 
@@ -96,3 +109,4 @@ filename = 'traj.csv';
 csvwrite(filename, array);
 system(['printf "', num2str(size(array,1)), ',', '4,3,6\n',...
     '$( cat ', filename, ' )" > ', filename]);
+save('workspace.mat')
