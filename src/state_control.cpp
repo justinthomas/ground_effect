@@ -156,6 +156,11 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       state_ = HOME;
       mav->goHome();
     }
+    else if(msg->buttons[land_button])
+    {
+      state_ = LAND;
+      mav->land();
+    }
     // Line Tracker Yaw
     else if(msg->buttons[line_tracker_yaw_button])
     {

@@ -13,6 +13,7 @@ static const int velocity_tracker_button = 30; // Track R
 static const int hover_button = 31; // Marker Set
 static const int line_tracker_yaw_button = 24; // Rewind 
 static const int home_button = 0; // Leftmost "S" button
+static const int land_button = 6;
 static const int eland_button = 7; // Rightmost "S" button
 
 struct buttons {
