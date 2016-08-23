@@ -19,9 +19,9 @@ find_package(catkin REQUIRED COMPONENTS
   mav_manager 
   cmake_modules)
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 catkin_package(
   INCLUDE_DIRS include
@@ -36,7 +36,7 @@ catkin_package(
     std_trackers 
     std_msgs 
     mav_manager
-  DEPENDS Eigen)
+  DEPENDS Eigen3)
 
 add_executable(state_control src/state_control.cpp src/trajectory.cpp)
 target_link_libraries(state_control ${catkin_LIBRARIES})
