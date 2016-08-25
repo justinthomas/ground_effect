@@ -135,7 +135,7 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
           double z = msg->axes[2] * fabs(msg->axes[2]) / 2;
           double yaw = msg->axes[3] * fabs(msg->axes[3]) / 2;
 
-          mav->setDesVelWorld(x, y, z, yaw);
+          mav->setDesVelInWorldFrame(x, y, z, yaw);
           ROS_INFO("Velocity Command: (%1.4f, %1.4f, %1.4f, %1.4f)", x, y, z, yaw);
         }
         break;
@@ -180,7 +180,7 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       // could cause steps in the velocity.
 
       ROS_INFO("Engaging controller: VELOCITY_TRACKER");
-      if (mav->setDesVelWorld(0,0,0))
+      if (mav->setDesVelInWorldFrame(0.,0.,0.,0.))
         state_ = VELOCITY_TRACKER;
     }
     else if(msg->buttons[traj_button])
@@ -245,8 +245,8 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
     traj.UpdateGoal(traj_goal);
 
     // If we are ready to start the trajectory
-    Eigen::Vector3d pos = mav->pos();
-    Eigen::Vector3d vel = mav->vel();
+    Eigen::Vector3f pos = mav->pos();
+    Eigen::Vector3f vel = mav->vel();
 
     if ( sqrt( pow(traj_goal.position.x - pos[0], 2)
              + pow(traj_goal.position.y - pos[1], 2)
