@@ -2,16 +2,19 @@
 
   <arg name="model"           default="QuadrotorAlpha" />
   <arg name="mass"            default="0.500"/>
-  <arg name="mocap_available" default="1"/>
-  <!-- <arg name="odom"            default="odom"/> -->
-  
-
 
   <group ns="$(arg model)">
 
     <param name="mass" value="$(arg mass)"/>
 
     <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="standalone_nodelet"
+      args="manager"
+      output="screen"/>
+    </node>
 
     <!-- Controller -->
     <node pkg="nodelet"
@@ -26,14 +29,6 @@
       <remap from="~position_cmd" to="position_cmd"/>
       <remap from="~so3_cmd" to="so3_cmd"/>
       <remap from="~motors" to="motors"/>
-    </node>
-
-    <!-- MAV Manager -->
-    <node pkg="nodelet"
-      type="nodelet"
-      name="standalone_nodelet"
-      args="manager"
-      output="screen"/>
     </node>
 
     <!-- Trackers Manager -->
@@ -53,8 +48,7 @@
       type="nodelet"
       name="quad_encode_msg"
       args="load quad_encode_msg/QuadEncodeMsg standalone_nodelet"
-      output="screen"
-      unless="$(arg sim)">
+      output="screen">
       <remap from="~so3_cmd" to="so3_cmd"/>
       <remap from="~serial_msg" to="to_robot"/>
     </node>
@@ -64,8 +58,7 @@
       type="nodelet"
       name="quad_decode_msg"
       args="load quad_decode_msg/QuadDecodeMsg standalone_nodelet"
-      output="screen"
-      unless="$(arg sim)">
+      output="screen">
       <remap from="~serial" to="from_robot"/>
     </node>
 
@@ -73,7 +66,7 @@
     <node pkg="nodelet"
       type="nodelet"
       name="quad_serial_comm"
-      args="standalone quad_serial_comm/QuadSerialComm"
+      args="load quad_serial_comm/QuadSerialComm standalone_nodelet"
       output="screen">
       <param name="device" value="/dev/ttyS2"/>
       <param name="baud_rate" value="230400"/>
