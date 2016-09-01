@@ -5,9 +5,9 @@
 
   <!-- Launch vicon odometry node -->
   <group>
-    <include file="$(find mocap_$(arg mocap_type))/launch/$(arg mocap_type).launch"> 
+    <include file="$(find mmocap_qualisys)/launch/qualisys.launch">
       <arg name="model" value="$(arg model)" />
-      <remap from="qualisys/$(arg model)/odom" to="/$(arg model)/odom"/
+      <remap from="qualisys/$(arg model)/odom" to="/$(arg model)/odom"/>
     </include>
   </group>
 

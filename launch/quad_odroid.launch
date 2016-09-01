@@ -14,7 +14,6 @@
       name="standalone_nodelet"
       args="manager"
       output="screen"/>
-    </node>
 
     <!-- Controller -->
     <node pkg="nodelet"
@@ -72,6 +71,17 @@
       <param name="baud_rate" value="230400"/>
       <remap from="~to_robot" to="to_robot"/>
       <remap from="~from_robot" to="from_robot"/>
+    </node>
+
+    <!-- This is the state control node -->
+    <node pkg="ground_effect"
+      type="state_control"
+      name="state_control"
+      output="screen">
+      <param name="traj_filename" type="string" value="/home/justin/Dropbox/papers_and_posters/Ground_Effect/data/payload_000g/speed_0_mps/height_2r/traj.csv"/>
+      <!-- update above properly -->
+      <rosparam file="$(find ground_effect)/config/mav_manager_params.yaml" />
+      <remap from="~so3_cmd" to="so3_cmd"/>
     </node>
    
   </group>
