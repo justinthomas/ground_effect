@@ -1,0 +1,85 @@
+<launch>
+
+  <arg name="model"           default="QuadrotorAlpha" />
+  <arg name="mass"            default="0.500"/>
+  <arg name="mocap_available" default="1"/>
+  <!-- <arg name="odom"            default="odom"/> -->
+  
+
+
+  <group ns="$(arg model)">
+
+    <param name="mass" value="$(arg mass)"/>
+
+    <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
+
+    <!-- Controller -->
+    <node pkg="nodelet"
+      type="nodelet"
+      args="load so3_control/SO3ControlNodelet standalone_nodelet"
+      name="so3_control"
+      required="true"
+      output="screen">
+      <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
+      <param name="mass" value="$(arg mass)"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~position_cmd" to="position_cmd"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~motors" to="motors"/>
+    </node>
+
+    <!-- MAV Manager -->
+    <node pkg="nodelet"
+      type="nodelet"
+      name="standalone_nodelet"
+      args="manager"
+      output="screen"/>
+    </node>
+
+    <!-- Trackers Manager -->
+    <node pkg="nodelet"
+      type="nodelet"
+      name="trackers_manager"
+      args="load trackers_manager/TrackersManager standalone_nodelet"
+      output="screen">
+      <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
+      <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~cmd" to="position_cmd"/>
+    </node>
+
+    <!-- Information transmitted to low level -->
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_encode_msg"
+      args="load quad_encode_msg/QuadEncodeMsg standalone_nodelet"
+      output="screen"
+      unless="$(arg sim)">
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~serial_msg" to="to_robot"/>
+    </node>
+
+    <!-- Information received from low level -->
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_decode_msg"
+      args="load quad_decode_msg/QuadDecodeMsg standalone_nodelet"
+      output="screen"
+      unless="$(arg sim)">
+      <remap from="~serial" to="from_robot"/>
+    </node>
+
+    <!-- For serial communication -->
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_serial_comm"
+      args="standalone quad_serial_comm/QuadSerialComm"
+      output="screen">
+      <param name="device" value="/dev/ttyS2"/>
+      <param name="baud_rate" value="230400"/>
+      <remap from="~to_robot" to="to_robot"/>
+      <remap from="~from_robot" to="from_robot"/>
+    </node>
+   
+  </group>
+</launch>
