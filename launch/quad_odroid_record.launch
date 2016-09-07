@@ -2,12 +2,19 @@
 
   <arg name="model"           default="QuadrotorAlpha" />
   <arg name="mass"            default="0.551"/>
+  <arg name="speed"           default="000"/>
+  <arg name="height"		  default="010"/>
+  <!-- speed values: {000, 050, 100, 150, 200, 300, 400, 500, 600, 700, 800} cm/s -->
+  <!-- height values: {005, 010, 015, 020, 025, 030, 040, 050} cm -->
 
   <group ns="$(arg model)">
 
     <param name="mass" value="$(arg mass)"/>
 
     <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
+
+    <!-- <param name="traj_filename" type="string" value="/home/odroid/GREFF_PERCH/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/traj.csv"/>
+    -->
 
     <node pkg="nodelet"
       type="nodelet"
@@ -78,11 +85,19 @@
       type="state_control"
       name="state_control"
       output="screen">
-      <param name="traj_filename" type="string" value="/home/odroid/catkin_ws/src/ground_effect/traj.csv"/>
-      <!-- update above properly -->
+      <param name="traj_filename" type="string" value="/home/odroid/GREFF_PERCH/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/traj.csv"/>
       <rosparam file="$(find ground_effect)/config/mav_manager_params.yaml" />
       <remap from="~so3_cmd" to="so3_cmd"/>
     </node>
+
+    <!-- This is the recording node -->
+    <node pkg="rosbag" 
+      type="record"
+      output="screen" 
+    	name="rosbag_record"
+      args="record -o /home/odroid/GREFF_PERCH/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/ 
+      /QuadrotorAlpha/motors /QuadrotorAlpha/odom /QuadrotorAlpha/position_cmd /QuadrotorAlpha/quad_decode_msg/output_data /QuadrotorAlpha/so3_cmd /QuadrotorAlpha/traj_num /QuadrotorAlpha/traj_signal /nanokontrol2"
+    /> 
    
   </group>
 </launch>
