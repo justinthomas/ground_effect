@@ -17,6 +17,7 @@
 #include <mav_manager/manager.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
+#include <mav_manager/mav_manager_services.h>
 
 // Local Includes
 // #include "state_control.h"
@@ -74,7 +75,7 @@ static ros::Publisher pub_traj_num_;
 static geometry_msgs::Point goal;
 
 // Function Prototypes
-double norm(const geometry_msgs::Point &a, const geometry_msgs::Point &b);
+float norm(const geometry_msgs::Point &a, const geometry_msgs::Point &b);
 
 // Callbacks and functions
 static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
@@ -130,12 +131,12 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
     {
       case VELOCITY_TRACKER:
         {
-          double x = msg->axes[0] * fabs(msg->axes[0]) / 2;
-          double y = msg->axes[1] * fabs(msg->axes[1]) / 2;
-          double z = msg->axes[2] * fabs(msg->axes[2]) / 2;
-          double yaw = msg->axes[3] * fabs(msg->axes[3]) / 2;
+          float x = msg->axes[0] * fabs(msg->axes[0]) / 2;
+          float y = msg->axes[1] * fabs(msg->axes[1]) / 2;
+          float z = msg->axes[2] * fabs(msg->axes[2]) / 2;
+          float yaw = msg->axes[3] * fabs(msg->axes[3]) / 2;
 
-          mav->setDesVelInWorldFrame(x, y, z, yaw);
+          mav->setDesVelInWorldFrame(x, y, z, yaw, true);
           ROS_INFO("Velocity Command: (%1.4f, %1.4f, %1.4f, %1.4f)", x, y, z, yaw);
         }
         break;
@@ -164,10 +165,10 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
     // Line Tracker Yaw
     else if(msg->buttons[line_tracker_yaw_button])
     {
-      double x = 2*msg->axes[0] + xoff;
-      double y = 2*msg->axes[1] + yoff;
-      double z = 2*msg->axes[2] + 2.0 + zoff;
-      double yaw = M_PI * msg->axes[3] + yaw_off;
+      float x = 2*msg->axes[0] + xoff;
+      float y = 2*msg->axes[1] + yoff;
+      float z = 2*msg->axes[2] + 2.0 + zoff;
+      float yaw = M_PI * msg->axes[3] + yaw_off;
 
       if (mav->goTo(x, y, z, yaw))
         state_ = LINE_TRACKER;
@@ -180,7 +181,7 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
       // could cause steps in the velocity.
 
       ROS_INFO("Engaging controller: VELOCITY_TRACKER");
-      if (mav->setDesVelInWorldFrame(0.,0.,0.,0.))
+      if (mav->setDesVelInWorldFrame(0,0,0,0,true))
         state_ = VELOCITY_TRACKER;
     }
     else if(msg->buttons[traj_button])
@@ -191,10 +192,10 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
         traj.set_start_time();
         traj.UpdateGoal(traj_goal);
 
-        double x = traj_goal.position.x;
-        double y = traj_goal.position.y;
-        double z = traj_goal.position.z;
-        double yaw = traj_goal.yaw;
+        float x = traj_goal.position.x;
+        float y = traj_goal.position.y;
+        float z = traj_goal.position.z;
+        float yaw = traj_goal.yaw;
 
         if (mav->goTo(x, y, z, yaw))
           state_ = PREP_TRAJ;
@@ -219,10 +220,10 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
       traj.set_start_time();
       traj.UpdateGoal(traj_goal);
 
-      double x = traj_goal.position.x;
-      double y = traj_goal.position.y;
-      double z = traj_goal.position.z;
-      double yaw = traj_goal.yaw;
+      float x = traj_goal.position.x;
+      float y = traj_goal.position.y;
+      float z = traj_goal.position.z;
+      float yaw = traj_goal.yaw;
 
       if (mav->goTo(x, y, z, yaw))
         state_ = PREP_TRAJ;
@@ -245,8 +246,8 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
     traj.UpdateGoal(traj_goal);
 
     // If we are ready to start the trajectory
-    Eigen::Vector3f pos = mav->pos();
-    Eigen::Vector3f vel = mav->vel();
+    auto pos = mav->pos();
+    auto vel = mav->vel();
 
     if ( sqrt( pow(traj_goal.position.x - pos[0], 2)
              + pow(traj_goal.position.y - pos[1], 2)
@@ -280,7 +281,7 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
   }
 }
 
-double norm(const geometry_msgs::Point &a, const geometry_msgs::Point &b)
+float norm(const geometry_msgs::Point &a, const geometry_msgs::Point &b)
 {
   return std::sqrt(
       std::pow(a.x - b.x, 2)
@@ -313,8 +314,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  // MAVManager stuff
+  // MAV Manager
   mav.reset(new MAVManager());
+
+  // MAV Services
+  MAVManagerServices mav_services(mav);
 
   // Publishers
   pub_traj_signal_ = n.advertise<std_msgs::Bool>("traj_signal", 1);
