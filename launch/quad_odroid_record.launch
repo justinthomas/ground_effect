@@ -13,7 +13,7 @@
 
     <rosparam file="$(find ground_effect)/config/hummingbird_gains.yaml"/>
 
-    <!-- <param name="traj_filename" type="string" value="/home/odroid/GREFF_PERCH/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/traj.csv"/>
+    <!-- <param name="traj_filename" type="string" value="/home/odroid/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/traj.csv"/>
     -->
 
     <node pkg="nodelet"
@@ -85,7 +85,7 @@
       type="state_control"
       name="state_control"
       output="screen">
-      <param name="traj_filename" type="string" value="/home/odroid/GREFF_PERCH/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/traj.csv"/>
+      <param name="traj_filename" type="string" value="/home/odroid/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/traj.csv"/>
       <rosparam file="$(find ground_effect)/config/mav_manager_params.yaml" />
       <remap from="~so3_cmd" to="so3_cmd"/>
     </node>
@@ -95,8 +95,8 @@
       type="record"
       output="screen" 
     	name="rosbag_record"
-      args="record -o /home/odroid/GREFF_PERCH/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/ 
-      /QuadrotorAlpha/motors /QuadrotorAlpha/odom /QuadrotorAlpha/position_cmd /QuadrotorAlpha/quad_decode_msg/output_data /QuadrotorAlpha/so3_cmd /QuadrotorAlpha/traj_num /QuadrotorAlpha/traj_signal /nanokontrol2"
+      args="record -o /home/odroid/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/ 
+      /QuadrotorAlpha/motors /QuadrotorAlpha/odom /QuadrotorAlpha/position_cmd /QuadrotorAlpha/quad_decode_msg/output_data /QuadrotorAlpha/so3_cmd /QuadrotorAlpha/traj_num /QuadrotorAlpha/traj_signal /QuadrotorAlpha/start_time /nanokontrol2"
     /> 
    
   </group>
