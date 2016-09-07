@@ -7,6 +7,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Time.h>
 #include <std_msgs/Int16.h>
 #include <geometry_msgs/Vector3.h>
 #include <nav_msgs/Odometry.h>
@@ -70,6 +71,7 @@ static bool play_button_pressed = false;
 // Publishers & services
 static ros::Publisher pub_traj_signal_;
 static ros::Publisher pub_traj_num_;
+static ros::Publisher pub_traj_time_;
 
 // Quadrotor Pose
 static geometry_msgs::Point goal;
@@ -265,6 +267,12 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
       pub_traj_signal_.publish(traj_on_signal);
 
       traj.set_start_time();
+
+      // Publish the trajectory start time
+      std_msgs::Time traj_start_time;
+      traj_start_time.data = traj.get_start_time();
+      pub_traj_time_.publish(traj_start_time);
+
       traj.UpdateGoal(traj_goal);
       mav->setPositionCommand(traj_goal);
     }
@@ -322,6 +330,7 @@ int main(int argc, char **argv)
 
   // Publishers
   pub_traj_signal_ = n.advertise<std_msgs::Bool>("traj_signal", 1);
+  pub_traj_time_ = n.advertise<std_msgs::Time>("start_time", 1);
   pub_traj_num_ = n.advertise<std_msgs::Int16>("traj_num", 1);
 
   // Subscribers
