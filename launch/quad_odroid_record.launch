@@ -95,7 +95,7 @@
       type="record"
       output="screen" 
     	name="rosbag_record"
-      args="record -o /home/odroid/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/ 
+      args="-o /home/odroid/perch_data/speed_$(arg speed)cmps/height_$(arg height)cm/ 
       /QuadrotorAlpha/motors /QuadrotorAlpha/odom /QuadrotorAlpha/position_cmd /QuadrotorAlpha/quad_decode_msg/output_data /QuadrotorAlpha/so3_cmd /QuadrotorAlpha/traj_num /QuadrotorAlpha/traj_signal /QuadrotorAlpha/start_time /nanokontrol2"
     /> 
    

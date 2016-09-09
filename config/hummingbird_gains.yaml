@@ -6,7 +6,7 @@ gains:
   ang: {x: 0.13, y: 0.13, z: 0.012}
   ki:  {x: 0.0, y: 0.0, z: 0.0}
 corrections:
-  kf: 0.000000006
+  kf: 5e-10 # default: 0.000000006
   r: 0.0
   p: 0.0
 
