@@ -209,7 +209,7 @@ static void nanokontrol_cb(const sensor_msgs::Joy::ConstPtr &msg)
 static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // If we are currently executing a trajectory, update the setpoint
-  if (state_ == TRAJ)
+  if (state_ == TRAJ && mav->status() == MAVManager::FLYING)
   {
     if (traj.isCompleted())
     {
@@ -254,7 +254,8 @@ static void odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
     if ( sqrt( pow(traj_goal.position.x - pos[0], 2)
              + pow(traj_goal.position.y - pos[1], 2)
              + pow(traj_goal.position.z - pos[2], 2) ) < 0.1 &&
-         sqrt( pow(vel[0],2) + pow(vel[1],2) + pow(vel[2],2) ) < 0.1)
+         sqrt( pow(vel[0],2) + pow(vel[1],2) + pow(vel[2],2) ) < 0.1 &&
+         mav->status() == MAVManager::FLYING)
     {
       state_ = TRAJ;
       traj_num_++;
